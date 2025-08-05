@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a0a27d48-78a2-44ae-afe1-5892a8725374" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="customerinfoapiFlow" doc:id="cfd1c44a-3db6-41b5-9ba7-b9aa62f4bc61" >
+		<http:listener doc:name="Listener" doc:id="70645a30-a6a1-4cd9-a903-26cced2b83f0" config-ref="HTTP_Listener_config" path="customer"/>
+		<choice doc:name="Choice" doc:id="fbd6c0b9-c11e-4485-b37c-eee98d237b08" >
+			<when expression="#[isEmpty(attributes.queryParams.customerId)]">
+				<ee:transform doc:name="Transform Message" doc:id="63459b91-8d6f-46fa-8186-20756132239e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 error: "customerId parameter is required"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="d27a816c-b322-4656-b6a9-dbf3e33a2cb8" message="#[payload]"/>
+			</when>
+			<otherwise >
+				<scatter-gather doc:name="Scatter-Gather" doc:id="afe032bd-9223-4115-ab44-2fb577d1d808" >
+					<route >
+						<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  name: "John Doe",&#10;  email: "john.doe@example.com"&#10;}]' doc:name="customer info" doc:id="d5fbff5f-21e4-4a84-b5ad-55bb833ea9af" />
+					</route>
+					<route >
+						<set-payload value='#[{ orders: ["Laptop", "Smartphone", "Headphones"] }]' doc:name="orders" doc:id="83fab3e8-2e7b-4dc4-bdc8-b9536fb1d9be" />
+					</route>
+				</scatter-gather>
+				<ee:transform doc:name="Transform Message" doc:id="d3ca87fb-265b-490b-a7a4-56a93c20bd13" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  customer: payload[0].payload,
+  orders: payload[1].payload.orders
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="7d10e151-daaa-442b-9409-080464370b80" message="#[payload]"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="84010207-01a4-4d5a-9d94-d6003ec3bc74" type="EXPRESSION">
+				<ee:transform doc:name="Transform Message" doc:id="6cae72a9-700e-4b21-bf78-bde436690963" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{ "error": "An unexpected error occurred." }]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
