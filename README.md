@@ -23,24 +23,25 @@ This API is designed for integration with frontend applications and core systems
   |--------------|--------|----------|------------------------------------ |
   | customerId   | int    | ✅ Yes   | Unique identifier of the customer  |
 - **Sample Request**:
-  
+  ``` GET http://localhost:8081/customer?customerId=1```
 ---
 - **Response**: JSON with customer and orders(default data for now).
   ```json
-{
-  "customerId": 123,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "orders": [
-    {
-      "orderId": 1,
-      "product": "Laptop",
-      "amount": 1000
-    },
-    ...
-  ]
-}  ```
----
+  {
+      "customerId": 123,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "orders": [
+                  {
+                    "orderId": 1,
+                    "product": "Laptop",
+                    "amount": 1000
+                  },
+                  ...
+                ]
+  } 
+
+--- 
 ### Future Enhancement
 ### ➕ `POST /customer`
 - **Description**: Creates a new customer record.
